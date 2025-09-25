@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm_postprocessor"  # the name people use with pip install
+version = "0.0.1"
+description = "A simple utility for llm postprocessing"
+authors = [{ name="Kin Wai Cheuk", email="kinwai.cheuk@sony.com" }]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    # nothing for now
+]
+
+[tool.setuptools.packages.find]
+where = ["."]

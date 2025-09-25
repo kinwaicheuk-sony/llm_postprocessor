@@ -1,6 +1,7 @@
 import copy
 import re
 import unicodedata
+from tqdm import tqdm
 
 def merge_dict(template, start_idx_list):
     merged_dict = {}
@@ -125,6 +126,48 @@ def self_fix(filtered_dict):
 
 # anormality detection
 # check if the string in the list per item in the dict is not too short (< 10 words) or too long (> 100 words)
+def anormality_check_dict(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_LENGTH=200):
+    anormality_list = []
+    non_english_list = []
+    homoglyphs_list = []
+    for k, v in tqdm(filtered_dict.items()):
+        for idx, caption in enumerate(v['captions']):
+            if len(caption.split()) < MIN_CAPTION_LENGTH or len(caption.split()) > MAX_CAPTION_LENGTH:
+                anormality_list.append((k, caption, idx))
+            # checking if there are non-english characters in the caption
+            # step 1: check if the caption contains homoglyphs
+            if contains_non_latin_homoglyphs(caption):
+                caption = replace_homoglyphs(caption)
+                homoglyphs_list.append((k, caption, idx))
+            # step 2: check if the caption contains other non-english characters
+            if contains_non_english(caption):
+                non_english_list.append((k, caption, idx))
+
+
+    return anormality_list, non_english_list, homoglyphs_list
+
+
+def anormality_check_musicllm(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_LENGTH=200):
+    anormality_list = []
+    non_english_list = []
+    homoglyphs_list = []
+    for k, v in tqdm(filtered_dict.items()):
+        tmp_caption = [v['text']] # dirty hack to fit musicLLM
+        for idx, caption in enumerate(tmp_caption):
+            if len(caption.split()) < MIN_CAPTION_LENGTH or len(caption.split()) > MAX_CAPTION_LENGTH:
+                anormality_list.append((k, caption, idx))
+            # checking if there are non-english characters in the caption
+            # step 1: check if the caption contains homoglyphs
+            if contains_non_latin_homoglyphs(caption):
+                caption = replace_homoglyphs(caption)
+                homoglyphs_list.append((k, caption, idx))
+            # step 2: check if the caption contains other non-english characters
+            if contains_non_english(caption):
+                non_english_list.append((k, caption, idx))
+
+
+    return anormality_list, non_english_list, homoglyphs_list
+
 def anormality_check(filtered_dict):
     anormality_list = []
     non_english_list = []

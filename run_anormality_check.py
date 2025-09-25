@@ -1,0 +1,65 @@
+import argparse
+import json
+import logging
+from pathlib import Path
+
+from llm_postprocessor import anormality_check_musicllm
+
+
+def load_jsonl(path: Path) -> dict:
+    """Load a JSONL file into a dict keyed by question_id."""
+    result = {}
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            data = json.loads(line)
+            qid = data.get("question_id")
+            if qid is None:
+                logging.warning("Skipping entry without question_id: %s", data)
+                continue
+            result[qid] = data
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run anormality check on JSONL data.")
+    parser.add_argument("--input", required=True, type=Path, help="Path to input JSONL file")
+    parser.add_argument("--min_caption_length", type=int, default=5, help="Minimum caption length")
+    parser.add_argument("--max_caption_length", type=int, default=200, help="Maximum caption length")
+    parser.add_argument("--output", type=Path, help="Optional path to write results as JSON")
+
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s"
+    )
+
+    logging.info("Loading input file: %s", args.input)
+    data = load_jsonl(args.input)
+    logging.info("Loaded %d records", len(data))
+
+    logging.info("Running anormality check...")
+    anormality_list, non_english_list, homoglyphs_list = anormality_check_musicllm(
+        data,
+        args.min_caption_length,
+        args.max_caption_length
+    )
+
+    results = {
+        "anormality_list": anormality_list,
+        "non_english_list": non_english_list,
+        "homoglyphs_list": homoglyphs_list,
+    }
+
+    if args.output:
+        logging.info("Writing results to %s", args.output)
+        with args.output.open("w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2, ensure_ascii=False)
+    else:
+        logging.info("Results:\n%s", json.dumps(results, indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

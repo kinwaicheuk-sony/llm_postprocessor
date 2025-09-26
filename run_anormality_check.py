@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from llm_postprocessor import anormality_check_musicllm
+from llm_postprocessor.utils import self_fix
 
 
 def load_jsonl(path: Path) -> dict:
@@ -29,6 +30,7 @@ def main():
     parser.add_argument("--max_caption_length", type=int, default=200, help="Maximum caption length")
     parser.add_argument("--output", type=Path, help="Optional path to write results as JSON")
     parser.add_argument("--tolerance", type=int, default=1, help="Number of foreign characters are allowed in a caption before filtering out")
+    parser.add_argument("--self_fix", action="store_true", help="Apply self-fixing minor mistakes to captions")
 
     args = parser.parse_args()
 
@@ -40,6 +42,10 @@ def main():
     logging.info("Loading input file: %s", args.input)
     data = load_jsonl(args.input)
     logging.info("Loaded %d records", len(data))
+
+    if args.self_fix:
+        logging.info("Applying self-fix to captions...")
+        data = self_fix(data)
 
     logging.info("Running anormality check...")
     anormality_list, non_english_list, homoglyphs_list, filtered_dict = anormality_check_musicllm(

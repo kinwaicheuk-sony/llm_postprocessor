@@ -2,6 +2,10 @@
 
 caption.json -> run_anormality_check.py -> filtered_caption.json
 
+## Installation
+```bash
+pip install git+https://github.com/kinwaicheuk-sony/llm_postprocessor.git
+```
 
 ## Case 1: Filtering given tolerance
 Please refer to `example1_check_and_filter.sh`.

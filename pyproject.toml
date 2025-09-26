@@ -15,3 +15,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[project.scripts]
+fix_json = "llm_postprocessor.cli:fix_llava_json"

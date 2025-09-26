@@ -2,6 +2,8 @@ import copy
 import re
 import unicodedata
 from tqdm import tqdm
+from pathlib import Path
+import json
 
 def merge_dict(template, start_idx_list):
     merged_dict = {}
@@ -12,6 +14,22 @@ def merge_dict(template, start_idx_list):
             merged_dict = merged_dict | content
 
     return merged_dict
+
+def load_jsonl(path: Path) -> dict:
+    """Load a JSONL file into a dict keyed by question_id."""
+    result = {}
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            data = json.loads(line)
+            qid = data.get("question_id")
+            if qid is None:
+                logging.warning("Skipping entry without question_id: %s", data)
+                continue
+            result[qid] = data
+    return result
+
 
 # ALLOWED_CHARS_PATTERN = r"[a-zA-Z0-9\s.,:;\'\"‘’“”!?()\[\]\-]"
 # def contains_non_english(s):

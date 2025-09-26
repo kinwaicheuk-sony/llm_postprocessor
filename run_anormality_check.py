@@ -3,8 +3,7 @@ import json
 import logging
 from pathlib import Path
 
-from llm_postprocessor import anormality_check_musicllm
-from llm_postprocessor.utils import self_fix
+from llm_postprocessor.utils import self_fix, anormality_check_musicllm
 
 
 def load_jsonl(path: Path) -> dict:

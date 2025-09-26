@@ -18,3 +18,4 @@ where = ["."]
 
 [project.scripts]
 fix_json = "llm_postprocessor.cli:fix_llava_json"
+run_anormality_check = "llm_postprocessor.cli:run_anormality_check"

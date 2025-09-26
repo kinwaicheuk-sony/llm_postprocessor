@@ -18,6 +18,8 @@ def merge_dict(template, start_idx_list):
 #     return bool(re.search(f"[^{ALLOWED_CHARS_PATTERN}]", s))
 ALLOWED_CHARS_PATTERN = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 \t\n\r.,:;'\"‘’“”!?()-[]|+=`&><~$°º"
 def contains_non_english(s):
+    counter = 0
+    flag = False
     for c in s:
         if c in ALLOWED_CHARS_PATTERN:
             continue
@@ -28,11 +30,14 @@ def contains_non_english(s):
         # Reject anything that is not Latin
         name = unicodedata.name(c, "")
         if not name.startswith("LATIN") and not name.startswith("DIGIT"):
-            return True
-    return False
+            flag = True
+            counter = +1
+    return flag, counter
 
 
 def contains_non_latin_homoglyphs(s):
+    counter = 0
+    flag = False    
     for c in s:
         # Normalize the character
         normalized = unicodedata.normalize('NFKC', c)
@@ -45,12 +50,13 @@ def contains_non_latin_homoglyphs(s):
         try:
             name = unicodedata.name(c)
         except ValueError:
-            return True  # Unnamed character (likely non-printable or control)
+            counter = +1 
+            flag = True  # Unnamed character (likely non-printable or control)
 
         # Check script family — allow only Latin and common punctuation
         if not name.startswith("LATIN") and not name.startswith("DIGIT") and not unicodedata.category(c).startswith("P"):
-            return True
-    return False
+            flag = True
+    return flag, counter
 
 def find_non_latin_homoglyphs(s):
     non_latin_chars = []
@@ -85,44 +91,13 @@ def self_fix(filtered_dict):
     debug_list = list(filtered_dict.keys())
     
     for k, v in filtered_dict.items():
-        processed_tracks.append(k)
-        new_dict[k] = {}
-        new_dict[k]['metadata'] = v['metadata']
-        new_dict[k]['captions'] = []
-        max_iteration = len(v['captions'])
+        caption = replace_homoglyphs(v['text']) # fixing homoglyphs errors first
+        new_dict[k] = v
+        new_dict[k]['text'] = caption
         flag = False
-        for idx, caption in enumerate(v['captions']):
-            if len(caption.split()) < MIN_CAPTION_LENGTH or len(caption.split()) > MAX_CAPTION_LENGTH:
-                flag = True
-                continue
-            # checking if there are non-english characters in the caption
-            # step 1: check if the caption contains homoglyphs
-            if contains_non_latin_homoglyphs(caption):
-                caption = replace_homoglyphs(caption)
-                flag = True
-                continue
-            # step 2: check if the caption contains other non-english characters
-            if contains_non_english(caption):
-                flag = True
-                continue
-            new_dict[k]['captions'].append(caption)
 
-            if len(new_dict[k]['captions']) == 2:
-                flag = False
-                break
-            elif idx == max_iteration - 1 and len(new_dict[k]['captions']) < 2:
-                flag = True
-                print(f"Run out of captions for {k}, only {len(new_dict[k]['captions'])} valid captions found.")
-        if flag:
-            problem_tracks.append(k)
-        else:
-            debug_list.remove(k)
 
-    # check if all tracks are processed
-    print(f"Number of processed tracks: {len(processed_tracks)}")
-    print(f"Number of tracks in the original dictionary: {len(filtered_dict)}")
-    assert len(processed_tracks) == len(filtered_dict), "Not all tracks are processed"
-    return new_dict, problem_tracks
+    return new_dict
 
 # anormality detection
 # check if the string in the list per item in the dict is not too short (< 10 words) or too long (> 100 words)
@@ -147,23 +122,25 @@ def anormality_check_dict(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_LENGT
     return anormality_list, non_english_list, homoglyphs_list
 
 
-def anormality_check_musicllm(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_LENGTH=200):
+def anormality_check_musicllm(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_LENGTH=200, tolerance=5):
     anormality_list = []
     non_english_list = []
     homoglyphs_list = []
     for k, v in tqdm(filtered_dict.items()):
         tmp_caption = [v['text']] # dirty hack to fit musicLLM
         for idx, caption in enumerate(tmp_caption):
+            english_check = contains_non_english(caption) # Boolean, count
+            latin_char_check = contains_non_latin_homoglyphs(caption)
+
             if len(caption.split()) < MIN_CAPTION_LENGTH or len(caption.split()) > MAX_CAPTION_LENGTH:
-                anormality_list.append((k, caption, idx))
+                anormality_list.append((k, caption, len(caption.split(' '))))
             # checking if there are non-english characters in the caption
             # step 1: check if the caption contains homoglyphs
-            if contains_non_latin_homoglyphs(caption):
-                caption = replace_homoglyphs(caption)
-                homoglyphs_list.append((k, caption, idx))
+            if latin_char_check[0]:
+                homoglyphs_list.append((k, caption, latin_char_check[1]))
             # step 2: check if the caption contains other non-english characters
-            if contains_non_english(caption):
-                non_english_list.append((k, caption, idx))
+            if english_check[0]:
+                non_english_list.append((k, caption, english_check[1]))
 
 
     return anormality_list, non_english_list, homoglyphs_list
@@ -228,6 +205,7 @@ homoglyph_map = {
     '\u043E': 'o',  # Cyrillic o
     '\u03BF': 'o',  # Greek omicron
     'у': 'y',  # Cyrillic small y
+    '�': '' # remove this symbol
     # ... add more as needed
 }
 

@@ -31,7 +31,7 @@ def contains_non_english(s):
         name = unicodedata.name(c, "")
         if not name.startswith("LATIN") and not name.startswith("DIGIT"):
             flag = True
-            counter = +1
+            counter += 1
     return flag, counter
 
 
@@ -50,12 +50,13 @@ def contains_non_latin_homoglyphs(s):
         try:
             name = unicodedata.name(c)
         except ValueError:
-            counter = +1 
+            counter += 1 
             flag = True  # Unnamed character (likely non-printable or control)
 
         # Check script family — allow only Latin and common punctuation
         if not name.startswith("LATIN") and not name.startswith("DIGIT") and not unicodedata.category(c).startswith("P"):
             flag = True
+            counter += 1
     return flag, counter
 
 def find_non_latin_homoglyphs(s):
@@ -126,6 +127,7 @@ def anormality_check_musicllm(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_L
     anormality_list = []
     non_english_list = []
     homoglyphs_list = []
+    new_dict = {}
     for k, v in tqdm(filtered_dict.items()):
         tmp_caption = [v['text']] # dirty hack to fit musicLLM
         for idx, caption in enumerate(tmp_caption):
@@ -142,8 +144,13 @@ def anormality_check_musicllm(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_L
             if english_check[0]:
                 non_english_list.append((k, caption, english_check[1]))
 
+            if english_check[1] > tolerance or latin_char_check[1] > tolerance:
+                pass # doesn't not include it in the new dict
+            else:
+                new_dict[k] = v
 
-    return anormality_list, non_english_list, homoglyphs_list
+
+    return anormality_list, non_english_list, homoglyphs_list, new_dict
 
 def anormality_check(filtered_dict):
     anormality_list = []

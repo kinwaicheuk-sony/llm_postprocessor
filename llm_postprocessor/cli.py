@@ -32,7 +32,13 @@ def run_anormality_check():
     )
 
     logging.info("Loading input file: %s", args.input)
-    data = load_jsonl(args.input)
+    try:
+        # loading json normally
+        with args.input.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        logging.warning("Failed to load JSON normally, trying to patch the llava json output...")
+        data = load_jsonl(args.input)
     logging.info("Loaded %d records", len(data))
 
     if args.self_fix:

@@ -154,6 +154,7 @@ def anormality_check_musicllm(filtered_dict, MIN_CAPTION_LENGTH=5, MAX_CAPTION_L
 
             if len(caption.split()) < MIN_CAPTION_LENGTH or len(caption.split()) > MAX_CAPTION_LENGTH:
                 anormality_list.append((k, caption, len(caption.split(' '))))
+                continue
             # checking if there are non-english characters in the caption
             # step 1: check if the caption contains homoglyphs
             if latin_char_check[0]:

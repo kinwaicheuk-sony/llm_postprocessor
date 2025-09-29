@@ -58,7 +58,7 @@ def contains_non_latin_homoglyphs(s):
     flag = False    
     for c in s:
         # Normalize the character7
-        #         normalized = unicodedata.normalize('NFKC', c)
+        normalized = unicodedata.normalize('NFKC', c)
 
         # Check if it's a standard Latin letter/digit or common punctuation
         if normalized in ALLOWED_CHARS_PATTERN:
@@ -232,7 +232,8 @@ homoglyph_map = {
     '\u043E': 'o',  # Cyrillic o
     '\u03BF': 'o',  # Greek omicron
     'у': 'y',  # Cyrillic small y
-    '�': '' # remove this symbol
+    '�': '', # remove this symbol
+    'м': '' # remove this symbol that always appear in the caption
     # ... add more as needed
 }
 

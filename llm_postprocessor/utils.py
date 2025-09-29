@@ -233,7 +233,32 @@ homoglyph_map = {
     '\u03BF': 'o',  # Greek omicron
     'у': 'y',  # Cyrillic small y
     '�': '', # remove this symbol
-    'м': '' # remove this symbol that always appear in the caption
+    'м': '', # remove this symbol that always appear in the caption
+    'б': '',
+    'ж': '',
+    'я': '',
+    'д': '',
+    'в': '',
+    'к': '',
+    'и': '',
+    'н': '',
+    'т': '',
+    'г': '',
+    'ч': '',
+    'щ': '',
+    'ь': '',
+    'л': '',
+    'з': '',
+    'ы': '',
+    'й': '',
+    'п': '',
+    'R': '',
+    'ц': '',
+    '-': '',
+    '̆': '',
+    '️': '',    
+    'ш': '',
+    'э': '',
     # ... add more as needed
 }
 

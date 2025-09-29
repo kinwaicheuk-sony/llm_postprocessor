@@ -20,7 +20,7 @@ def run_anormality_check():
     parser.add_argument("--input", required=True, type=Path, help="Path to input JSONL file")
     parser.add_argument("--min_caption_length", type=int, default=5, help="Minimum caption length")
     parser.add_argument("--max_caption_length", type=int, default=200, help="Maximum caption length")
-    parser.add_argument("--output", type=Path, help="Optional path to write results as JSON")
+    parser.add_argument("--output_folder", type=Path, help="Optional path to write results as JSON")
     parser.add_argument("--tolerance", type=int, default=1, help="Number of foreign characters are allowed in a caption before filtering out")
     parser.add_argument("--self_fix", action="store_true", help="Apply self-fixing minor mistakes to captions")
 
@@ -59,14 +59,21 @@ def run_anormality_check():
         "homoglyphs_list": homoglyphs_list,
     }
 
-    if args.output:
-        logging.info("Writing results to %s", args.output)
-        with args.output.open("w", encoding="utf-8") as f:
-            json.dump(results, f, indent=2, ensure_ascii=False)
+
+    if args.output_folder:
+        # create output folder if not exists
+        args.output_folder.mkdir(parents=True, exist_ok=True)
+        filtered_output_path = args.output_folder / f"filtered_{args.input.name}"
+        problem_output_path = args.output_folder / f"problem_{args.input.name}"
     else:
-        logging.info("Results:\n%s", json.dumps(results, indent=2, ensure_ascii=False))
+        filtered_output_path = args.input.parent / f"filtered_{args.input.name}"
+        problem_output_path = args.input.parent / f"problem_{args.input.name}"
+
+    # exporting results
+    logging.info("Writing results to %s", problem_output_path)
+    with problem_output_path.open("w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
 
     # append the string `filtered_` to the input filename
-    filtered_output_path = args.input.parent / f"filtered_{args.input.name}"
     with filtered_output_path.open("w", encoding="utf-8") as f:
         json.dump(filtered_dict, f, indent=2, ensure_ascii=False)

@@ -3,5 +3,5 @@ python run_anormality_check.py \
     --min_caption_length 5 \
     --max_caption_length 200 \
     --tolerance 1  \
-    --output problem_output.json \
+    --output_folder output_folder \
     --self_fix

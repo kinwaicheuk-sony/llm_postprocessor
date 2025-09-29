@@ -57,8 +57,8 @@ def contains_non_latin_homoglyphs(s):
     counter = 0
     flag = False    
     for c in s:
-        # Normalize the character
-        normalized = unicodedata.normalize('NFKC', c)
+        # Normalize the character7
+        #         normalized = unicodedata.normalize('NFKC', c)
 
         # Check if it's a standard Latin letter/digit or common punctuation
         if normalized in ALLOWED_CHARS_PATTERN:
@@ -67,14 +67,15 @@ def contains_non_latin_homoglyphs(s):
         # Reject characters not from the Latin script
         try:
             name = unicodedata.name(c)
+        # Check script family — allow only Latin and common punctuation
+            if not name.startswith("LATIN") and not name.startswith("DIGIT") and not unicodedata.category(c).startswith("P"):
+                flag = True
+                counter += 1
         except ValueError:
             counter += 1 
             flag = True  # Unnamed character (likely non-printable or control)
 
-        # Check script family — allow only Latin and common punctuation
-        if not name.startswith("LATIN") and not name.startswith("DIGIT") and not unicodedata.category(c).startswith("P"):
-            flag = True
-            counter += 1
+
     return flag, counter
 
 def find_non_latin_homoglyphs(s):
